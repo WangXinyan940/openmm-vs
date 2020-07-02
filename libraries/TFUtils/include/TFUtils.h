@@ -17,7 +17,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-
+#ifndef TFUTILS_H_
+#define TFUTILS_H_
+ 
 #include <tensorflow/c/c_api.h>
 #include <iostream>
 #include <cstddef>
@@ -110,6 +112,5 @@ private:
  
 }; // End class TFUtils
  
-#if defined(_MSC_VER)
-#  pragma warning(pop)
+
 #endif

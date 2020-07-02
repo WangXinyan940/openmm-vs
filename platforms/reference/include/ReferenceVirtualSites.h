@@ -34,6 +34,7 @@
 
 #include "openmm/System.h"
 #include "openmm/Vec3.h"
+#include "TFSingleton.h"
 #include <vector>
 
 namespace OpenMM {

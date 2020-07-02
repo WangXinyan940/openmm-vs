@@ -185,17 +185,15 @@ const Vec3& LocalCoordinatesSite::getLocalPosition() const {
     return localPosition;
 }
 
-NNWaterSite::NNWaterSite(int particle1, int particle2, int particle3, std::string graph_path) :
-       graph_path(graph_path) {
+NNWaterSite::NNWaterSite(int particle1, int particle2, int particle3, std::string nameinp){
     vector<int> particles(3);
     particles[0] = particle1;
     particles[1] = particle2;
     particles[2] = particle3;
     setParticles(particles);
-    TFUtils::STATUS status = TFU.LoadModel(graph_path);
+    modelName = nameinp;
 }
 
 std::string NNWaterSite::getGraphPath() const {
-    return graph_path;
+    return modelName;
 }
-

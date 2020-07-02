@@ -30,8 +30,11 @@
  * -------------------------------------------------------------------------- */
 
 #include "ReferenceVirtualSites.h"
+#include "TFSingleton.h"
 #include "openmm/VirtualSite.h"
 #include <cmath>
+#include <string>
+#include <iostream>
 
 using namespace OpenMM;
 using namespace std;
@@ -41,6 +44,7 @@ double distance(const Vec3 p1, const Vec3 p2){
 }
 
 void ReferenceVirtualSites::computePositions(const OpenMM::System& system, vector<OpenMM::Vec3>& atomCoordinates) {
+    TFSingleton& Singleton = TFSingleton::getInstance();
     for (int i = 0; i < system.getNumParticles(); i++)
         if (system.isVirtualSite(i)) {
             if (dynamic_cast<const TwoParticleAverageSite*>(&system.getVirtualSite(i)) != NULL) {
@@ -99,11 +103,29 @@ void ReferenceVirtualSites::computePositions(const OpenMM::System& system, vecto
             }
             else if (dynamic_cast<const NNWaterSite*>(&system.getVirtualSite(i)) != NULL) {
                 // calculate position and grad at here, then save grad to virtual site.
+                const NNWaterSite& site = dynamic_cast<const NNWaterSite&>(system.getVirtualSite(i));
+                int p1 = site.getParticle(0), p2 = site.getParticle(1), p3 = site.getParticle(2);
+                const std::string modelname = site.getGraphPath();
+                std::vector<float> inputCrd(9);
+                inputCrd[0] = atomCoordinates[p1][0];
+                inputCrd[1] = atomCoordinates[p1][1];
+                inputCrd[2] = atomCoordinates[p1][2];
+                inputCrd[3] = atomCoordinates[p2][0];
+                inputCrd[4] = atomCoordinates[p2][1];
+                inputCrd[5] = atomCoordinates[p2][2];
+                inputCrd[6] = atomCoordinates[p3][0];
+                inputCrd[7] = atomCoordinates[p3][1];
+                inputCrd[8] = atomCoordinates[p3][2];
+                std::vector<float> vspos = Singleton.calcVSPos(modelname, i, inputCrd);
+                atomCoordinates[i][0] = vspos[0];
+                atomCoordinates[i][1] = vspos[1];
+                atomCoordinates[i][2] = vspos[2];
             }
         }
 }
 
 void ReferenceVirtualSites::distributeForces(const OpenMM::System& system, const vector<OpenMM::Vec3>& atomCoordinates, vector<OpenMM::Vec3>& forces) {
+    TFSingleton& Singleton = TFSingleton::getInstance();
     for (int i = 0; i < system.getNumParticles(); i++)
         if (system.isVirtualSite(i)) {
             Vec3 f = forces[i];
@@ -197,7 +219,19 @@ void ReferenceVirtualSites::distributeForces(const OpenMM::System& system, const
                 }
             }
             else if (dynamic_cast<const NNWaterSite*>(&system.getVirtualSite(i)) != NULL) {
-                 // read grad from virtual site and then distribute forces.
+                // read grad from virtual site and then distribute forces.
+                const NNWaterSite& site = dynamic_cast<const NNWaterSite&>(system.getVirtualSite(i));
+                int p1 = site.getParticle(0), p2 = site.getParticle(1), p3 = site.getParticle(2);
+                std::vector<float> gradient = Singleton.calcVSGrad(i);
+                forces[p1][0] += f[0] * gradient[0] + f[1] * gradient[9+0] + f[2] * gradient[18+0];
+                forces[p1][1] += f[0] * gradient[1] + f[1] * gradient[9+1] + f[2] * gradient[18+1];
+                forces[p1][2] += f[0] * gradient[2] + f[1] * gradient[9+2] + f[2] * gradient[18+2];
+                forces[p2][0] += f[0] * gradient[3] + f[1] * gradient[9+3] + f[2] * gradient[18+3];
+                forces[p2][1] += f[0] * gradient[4] + f[1] * gradient[9+4] + f[2] * gradient[18+4];
+                forces[p2][2] += f[0] * gradient[5] + f[1] * gradient[9+5] + f[2] * gradient[18+5];
+                forces[p3][0] += f[0] * gradient[6] + f[1] * gradient[9+6] + f[2] * gradient[18+6];
+                forces[p3][1] += f[0] * gradient[7] + f[1] * gradient[9+7] + f[2] * gradient[18+7];
+                forces[p3][2] += f[0] * gradient[8] + f[1] * gradient[9+8] + f[2] * gradient[18+8];
             }
         }
 }

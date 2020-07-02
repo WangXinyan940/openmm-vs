@@ -35,6 +35,7 @@
 #include <openmm/Vec3.h>
 #include "internal/windowsExport.h"
 #include <vector>
+#include <string>
 
 namespace OpenMM {
 
@@ -257,14 +258,8 @@ private:
 };
 
 /**
- * This is a VirtualSite that uses a polynomial of three other particles to compute a virtual
- * site. Particle1 is oxygen, while particle2 and particle3 are hydrogens. The form looks like
- * 
- * b1 = distance(p1,p2); b2 = distance(p1,p3); b3 = distance(p2,p3);
- * M = alpha * p1 + (1-alpha)/2 * p2 + (1-alpha)/2 * p3 ;
- * alpha = p_b_3 * b1^3 + p_b_2 * b1^2 + p_b_1 * b1 + 
- *         p_b_3 * b2^3 + p_b_2 * b2^2 + p_b_1 * b2 + 
- *         p_a_3 * b3^3 + p_a_2 * b3^2 + p_a_1 * b3 + C
+ * This is a VirtualSite that uses a DL model to predict the position of virtual
+ * site. Particle1 is oxygen, while particle2 and particle3 are hydrogens. 
  */
 class OPENMM_EXPORT NNWaterSite : public VirtualSite {
 public:
@@ -274,23 +269,15 @@ public:
      * @param particle1      the index of the first particle
      * @param particle2      the index of the second particle
      * @param particle3      the index of the third particle
-     * @param inp_params     the parameters for the polynomial form of the site position
+     * @param nameinp        the file path of input graph. The graph is global used, so only one graph is allowed per task.
      */
-    NNWaterSite(int particale1, int particle2, int particle3, std::string graph_path);
+    NNWaterSite(int particale1, int particle2, int particle3, std::string nameinp);
     /**
-     * Get the parameters of the virtual site.
+     * Get the graph path of the virtual site.
      */
     std::string getGraphPath() const;
-    /**
-     * Calculate the position of the virtual site and the gradient on input coordinates.
-     * 
-     * Input: ox, oy, oz, h1x, h1y, h1z, h2x, h2y, h2z
-     * Output: mx, my, mz, dmx_dox, dmx_doy, dmx_doz ... 
-     */
-    std::vector<std::vector<float>> calcVS(std::vector<float> crds); 
 private:
-    std::string graph_path;
-    TFUtils TFU;
+    std::string modelName;
 };
 
 } // namespace OpenMM
